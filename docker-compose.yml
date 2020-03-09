@@ -1,0 +1,60 @@
+version: '2'
+
+
+services:
+  nginx: 
+    image: nginx:latest
+    container_name: production_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - nginx-logs:/var/logs/nginx/
+    ports:
+      - 80:80
+     
+  jira:
+    image: atlassian/jira-software:8.0.0
+    container_name: jira
+    hostname: jira
+    volumes: 
+      - jira_home:/var/atlassian/application-data/jira
+    environment:
+      - TZ=Europe/London
+      - JVM_MINIMUM_MEMORY=512m
+      - JVM_MAXIMUM_MEMORY=2048m
+    
+     
+  confluence:
+    image: atlassian/confluence-server:6.4.3-jdk8
+    container_name: confluence
+    hostname: confluence
+    volumes:
+      - confluence-web:/var/atlassian/confluence
+  
+  splunkenterprise:
+    #build: .
+    hostname: splunkenterprise
+    image: splunk/splunk
+    environment:
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_ENABLE_LISTEN: 9997
+      SPLUNK_ADD: tcp 1514
+      SPLUNK_PASSWORD: changeme123
+    volumes:
+      - opt-splunk-etc:/opt/splunk/etc
+      - opt-splunk-var:/opt/splunk/var
+      - confluence-web:/opt/confluence
+      - jira_home:/opt/jira
+      - nginx-logs
+    ports:
+      - "8000:8000"
+      - "9997:9997"
+      - "8088:8088"
+      - "1514:1514"
+
+  
+volumes:
+    confluence-web:
+    jira_home:
+    opt-splunk-etc:
+    opt-splunk-var:
+    nginx-logs:
