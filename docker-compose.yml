@@ -6,7 +6,7 @@ services:
   # http://api-app.localhost:5000 -> dockerhost:8000
   # http://web-app.localhost:5000 -> dockerhost:8080
   proxy:
-    image: nginx:alpine
+    build: ./docker/
     ports:
       - "80:80"
     volumes:
@@ -26,20 +26,36 @@ services:
       - JVM_MAXIMUM_MEMORY=2048m
     ports:
       - "8080:8080"
+    volumes:
+      - jiradata:/var/atlassian/jira
     networks:
       - proxynet
     
      
   confluence:
-    image: atlassian/confluence-server:6.4.3-jdk8
+    image: atlassian/confluence-server:6.6.0
     container_name: confluence
     hostname: confluence
+    volumes:
+     - confluencedata:/var/atlassian/confluence
     ports:
      - "8090:8090"
     networks:
       - proxynet
       
       
+  db:
+    image: postgres:9.6
+    container_name: postgres
+    volumes:
+      - postgresqldata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=confluencedb
+      - POSTGRES_PASSWORD=verybigsecretrootpassword
+      - POSTGRES_DB=confluencedb
+    networks:
+      - proxynet
+
   splunkenterprise:
     #build: .
     hostname: splunkenterprise
@@ -51,6 +67,8 @@ services:
       SPLUNK_PASSWORD: changeme123
     volumes:
       - nginx-logs:/nginxlogs/
+      - confluencedata:/confluencelogs/
+      - jiradata:/jira/
     ports:
       - "8000:8000"
       - "9997:9997"
@@ -62,5 +80,8 @@ services:
       
 volumes:
   nginx-logs:   
+  confluencedata:
+  jiradata:
+  postgresqldata:
 networks:
   proxynet:
